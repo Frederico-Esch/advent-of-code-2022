@@ -1,0 +1,12 @@
+**/**/.idea
+**/**/obj
+**/**/bin
+**/**/build
+**/**/target
+**/**/*.sln
+**/**/*.csproj
+**/**/*.out
+**/**/*.o
+**/**/teste
+**/**/test
+**/**/input
