@@ -3,6 +3,7 @@
 **/**/bin
 **/**/build
 **/**/target
+**/**/.cache
 **/**/*.sln
 **/**/*.csproj
 **/**/*.out
@@ -10,3 +11,4 @@
 **/**/teste
 **/**/test
 **/**/input
+**/**/main

@@ -1,0 +1,17 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-std=c++2a",
+      "-I",
+      "/home/frederico/intel/oneapi/mpi/2021.7.1//include",
+      "-o",
+      "main",
+      "./main.cpp"
+    ],
+    "directory": "/home/frederico/dev/advent-of-code/day-12",
+    "file": "/home/frederico/dev/advent-of-code/day-12/main.cpp",
+    "output": "/home/frederico/dev/advent-of-code/day-12/main"
+  }
+]
