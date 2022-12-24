@@ -6,7 +6,7 @@
 #include<stdint.h>
 #include<stdbool.h>
 
-//GAVE UP AGAIN
+#define OUTFILE
 
 char* read_line(FILE* file){
     int start = ftell(file);
@@ -63,7 +63,7 @@ void wrap_in_sublist(ListElement* element){
 }
 
 int compare(ListElement* left, ListElement* right){
-    while (1)
+    while (left->type != ET_END || right->type != ET_END)
     {
         if (left->type == ET_END) return true;
         if (right->type == ET_END) return false;
@@ -78,7 +78,8 @@ int compare(ListElement* left, ListElement* right){
                 wrap_in_sublist(right);
             }
             int result = compare(left->sublist, right->sublist);
-            return result;
+            if (result == true || result == false)
+                return result;
         }
 
         left = left->next;
@@ -153,6 +154,9 @@ void print_lista(ListElement* lista){
 
 int main(void){
     FILE* file = fopen("input.txt", "r"); //"abc" -> 'a' + 'b' + 'c' + '\0'
+    #ifdef OUTFILE
+    FILE* saida = fopen("saida.txt", "w");
+    #endif 
     char* line[2];
     ListElement* listas[2];
     int pair = 0, sum = 0;
@@ -164,16 +168,16 @@ int main(void){
         fgetc(file); //throw end of pair
 
         printf("pair %d\n", pair);
-        printf("STRING:\n");
+        //printf("STRING:\n");
         printf("LISTA 0: %s\n", line[0]);
         printf("LISTA 1: %s\n", line[1]);
         listas[0] = parse_lista(line[0], NULL);
         listas[1] = parse_lista(line[1], NULL);
-        printf("BUILT:\n");
-        printf("LISTA 0: ");
-        print_lista(listas[0]); putchar('\n');
-        printf("LISTA 1: ");
-        print_lista(listas[1]); putchar('\n'); 
+        //printf("BUILT:\n");
+        //printf("LISTA 0: ");
+        //print_lista(listas[0]); putchar('\n');
+        //printf("LISTA 1: ");
+        //print_lista(listas[1]); putchar('\n'); 
         int comparison = compare(listas[0], listas[1]);
         if (comparison != 0){
             printf("RESULT = TRUE\n");
@@ -185,10 +189,16 @@ int main(void){
 
         putchar('\n');
 
+        #ifdef OUTFILE
+        fprintf(saida, "pair %d RESULT %d\n", pair, comparison);
+        #endif
         free(line[0]);
         free(line[1]);
     }
 
+    #ifdef OUTFILE
+    fclose(saida);
+    #endif OUTFILE
     fclose(file);
     return 0;
 }

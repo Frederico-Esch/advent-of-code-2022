@@ -1,6 +1,6 @@
 from itertools import zip_longest
 
-file = open("test.txt", "r")
+file = open("input.txt", "r")
 lines = list(map( lambda x: x.strip(), filter(lambda x: len(x) > 1, file.readlines())))
 
 def compare(left, right):
@@ -21,6 +21,7 @@ def compare(left, right):
 
 pair = 0
 soma = 0
+saida = open("python_saida.txt", "+w")
 for left, right in zip(lines[::2], lines[1::2]):
     pair += 1
     print(left)
@@ -32,5 +33,8 @@ for left, right in zip(lines[::2], lines[1::2]):
         soma += pair
     print()
 
+    saida.write(f"pair {pair} RESULT {int(comparison)}\n")
+
 print(f"{soma=}")
+saida.close()
 file.close()
