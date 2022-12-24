@@ -107,9 +107,9 @@ void read_file(matrix &grid, point &start, point &end) {
         for (char c : line) {
             int elevation = 0;
             if (c == 'S')
-                start = std::make_pair(row.size(), grid.size());
+                start = {row.size(), grid.size()};
             else if (c == 'E') {
-                end = std::make_pair(row.size(), grid.size());
+                end = {row.size(), grid.size()};
                 elevation = 'z' - 'a';
             } else {
                 elevation = c - 'a';
