@@ -3,8 +3,10 @@
 #include<assert.h>
 #include<string.h>
 #include<math.h>
+#include<stdint.h>
+#include<stdbool.h>
 
-//GAVE UP
+//GAVE UP AGAIN
 
 char* read_line(FILE* file){
     int start = ftell(file);
@@ -22,119 +24,137 @@ char* read_line(FILE* file){
     return line;
 }
 
-int next_element(char* line){
-    int index = 0;
-    while(line[index] != ']' && line[index] != ',' && line[index] && line[index] != '[') index++;
-    return index;
-}
+typedef enum {
 
-typedef struct {
+    ET_NUMBER,
+    ET_SUBLIST,
+    ET_END
 
-    int size;
-    int end;
+} ElementType;
 
-} LIST_SIZE;
 
-LIST_SIZE size_list(char* list){
-    if(list[1] == ']') {
-        LIST_SIZE result = {
-            .size = 0,
-            .end = 2,
-        };
-        return result;
-    }
+struct _ListElement {
 
-    int size = 1;
-    int index = 0;
-    int depth = 0;
-    do {
-        if(list[index] == ',') size++;
-        if(list[index] == ']') depth--;
-        if(list[index] == '[') depth++;
-        index++;
-    }while(depth > 0);
-
-    LIST_SIZE result = {
-        .size = size,
-        .end = index
+    ElementType type;
+    union
+    {
+        struct _ListElement* sublist;
+        int number;
     };
-    return result;
+    struct _ListElement* next;
+
+};
+typedef struct _ListElement ListElement;
+
+void wrap_in_sublist(ListElement* element){
+    int number = element->number;
+    ListElement* subelement = malloc(sizeof(ListElement));
+
+    element->type = ET_SUBLIST;
+    element->sublist = subelement;
+
+    subelement->type = ET_NUMBER;
+    subelement->number = number;
+    subelement->next = malloc(sizeof(ListElement));
+
+    subelement->next->type = ET_END;
+    subelement->next->next = NULL;
+
 }
 
-int compare_items(char* lhs, char* rhs){
-    //only comparing numbers right now
-    int right_index = 1, left_index = 1, index;
-    while(rhs[right_index] != '\0' && lhs[left_index] != '\0'){
-        int left_value = -1, right_value = -1;
-        int left_size = 0, right_size = 0;
+int compare(ListElement* left, ListElement* right){
+    while (1)
+    {
+        if (left->type == ET_END) return true;
+        if (right->type == ET_END) return false;
 
-        #pragma region left dealing
-        index = next_element(&lhs[left_index]) + left_index;
-        if(lhs[index] == '[' || lhs[index+1] == '[') {
-            printf("ELEMENT: LIST ");
-            LIST_SIZE size = size_list(&lhs[index]);
-            left_size = size.size;
-            left_index += size.end;
-            printf("SIZE %d\n", left_size);
+        if(left->type == ET_NUMBER && right->type == ET_NUMBER){
+            if (left->number < right->number) return true;
+            if (right->number < left->number) return false;
+        }else {
+            if (left->type == ET_NUMBER){
+                wrap_in_sublist(left);
+            }else if(right->type == ET_NUMBER){
+                wrap_in_sublist(right);
+            }
+            int result = compare(left->sublist, right->sublist);
+            return result;
         }
-        else if(lhs[index] == ','){
-            printf("ELEMENT: NUMBER = ");
-            left_value = 0;
-            for(int i = index-1; i >= left_index; i--) left_value += (lhs[i] - '0')*(pow(10, index-left_index-1));
-            printf("%d\n", left_value);
-            left_index = index + 1;
-        }else if(lhs[index] == ']'){
-            printf("LEFT RAN OUT OF ITEMS: INPUT IS CORRECT\n");
-            return 1; //left run out so it's correct
-        }
-        #pragma endregion
 
-        #pragma region right dealing
-        index = next_element(&rhs[right_index]) + right_index;
-        if(rhs[index] == '[' || rhs[index+1] == '['){
-            printf("ELEMENT: LIST ");
-            LIST_SIZE size = size_list(&rhs[index]);
-            right_size = size.size;
-            right_index += size.end;
-            printf("SIZE %d\n", right_size);
-        }
-        else if(rhs[index] == ','){
-            printf("ELEMENT: NUMBER = ");
-            right_value = 0;
-            for(int i = index-1; i >= right_index; i--) right_value += (rhs[i] - '0')*(pow(10, index-right_index-1));
-            printf("%d\n", right_value);
-            right_index = index + 1;
-        }
-        else if(rhs[index] == ']'){
-            printf("RIGHT RAN OUT OF ITEMS: INPUT IS INCORRECT\n");
-            return 0;
-        }
-        #pragma endregion
+        left = left->next;
+        right = right->next;
+    }
+    return 2;
+}
 
-        if(right_value > -1 && left_value > -1){
-            if(left_index > right_index)
-                return 0;
+int parse_int(char* string, size_t* offset){
+    int index = 0;
+    int value = 0;
+    while(string[index] != ',' && string[index] != ']') {
+
+        if(isalpha(string[index+1])){
+            value += (string[index] - '0') * 10;
+        }else {
+            value += (string[index] - '0');
+        }
+        index++;
+    }
+    *offset += index;
+    return value;
+}
+
+int isalpha(char n){
+    return n <= '9' && n >= '0';
+}
+
+ListElement* parse_lista(char* line, size_t* offset){
+    size_t index = 1;
+    ListElement* root = malloc(sizeof(ListElement));
+
+    ListElement* current = root;
+    while (line[index] != ']' )
+    {
+        if(line[index] == ',') index++;
+
+        if(isalpha(line[index])){
+            current->number = parse_int(&line[index], &index);
+            current->type = ET_NUMBER;
+            current->next = malloc(sizeof(ListElement));
+            current = current->next;
+        }else if(line[index] == '[') {
+            current->type = ET_SUBLIST;
+            current->sublist = parse_lista(&line[index], &index);
+            current->next = malloc(sizeof(ListElement));
+            current = current->next;
         }
         else {
-            if(left_value > -1 || right_value > -1){
-                if (left_value > -1)
-                    left_size = 1;
-                else
-                    right_size = 1;
-            }
-
-            if (left_size > right_size){
-                printf("RIGHT SUB LIST RAN OUT OF ELEMENTS FIRST: INPUT IS INCORRECT\n");
-                return 0;
-            }
+            index++;
         }
     }
-    return 1;
+    if(offset != NULL) *offset += index+1;
+    current->type = ET_END;
+    current->next = NULL;
+    return root;
+}
+
+void print_lista(ListElement* lista){
+    printf("[");
+    while(lista->type != ET_END){
+        if(lista->type == ET_NUMBER){
+            printf("%d", lista->number);
+        }else if(lista->type == ET_SUBLIST){
+            print_lista(lista->sublist);
+        }
+        lista = lista->next;
+        if(lista->type != ET_END) printf(",");
+    }
+    printf("]");
 }
 
 int main(void){
-    FILE* file = fopen("test.txt", "r"); //"abc" -> 'a' + 'b' + 'c' + '\0'
+    FILE* file = fopen("input.txt", "r"); //"abc" -> 'a' + 'b' + 'c' + '\0'
     char* line[2];
+    ListElement* listas[2];
     int pair = 0, sum = 0;
 
     while(pair++ || 1) {
@@ -143,14 +163,28 @@ int main(void){
         line[1] = read_line(file);
         fgetc(file); //throw end of pair
 
-        //print
-        printf("PAIR: %d\n", pair);
-        printf("LINE 0: %s\n", line[0]);
-        printf("LINE 1: %s\n\n", line[1]);
-        if(compare_items(line[0], line[1])){
+        printf("pair %d\n", pair);
+        printf("STRING:\n");
+        printf("LISTA 0: %s\n", line[0]);
+        printf("LISTA 1: %s\n", line[1]);
+        listas[0] = parse_lista(line[0], NULL);
+        listas[1] = parse_lista(line[1], NULL);
+        printf("BUILT:\n");
+        printf("LISTA 0: ");
+        print_lista(listas[0]); putchar('\n');
+        printf("LISTA 1: ");
+        print_lista(listas[1]); putchar('\n'); 
+        int comparison = compare(listas[0], listas[1]);
+        if (comparison != 0){
+            printf("RESULT = TRUE\n");
             sum += pair;
+        }else {
+            printf("RESULT = FALSE\n");
         }
-        printf("SUM = %d\n\n", sum);
+        printf("SUM = %d\n", sum);
+
+        putchar('\n');
+
         free(line[0]);
         free(line[1]);
     }
