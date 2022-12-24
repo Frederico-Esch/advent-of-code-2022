@@ -16,4 +16,5 @@
 **/**/test
 **/**/input
 **/**/main
-
+**/**/*.ilk
+**/**/.vscode
